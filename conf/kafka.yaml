@@ -9,9 +9,9 @@ kafka:
     - 'localhost:9092'
 
 kafka-consumer:
-  group_id: 'group-name'
-  client_id: 'flask-consumer'
+  group_id: 'playerpro-job-consumer'
+  client_id: 'playerpro-job-consumer'
 
 kafka-producer:
-  client_id: 'flask-producer'
+  client_id: 'playerpro-job-producer'
   compression_type: 'gzip'
