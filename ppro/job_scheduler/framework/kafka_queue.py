@@ -10,6 +10,7 @@ import ppro.job_scheduler.framework.yaml_reader
 from ppro.job_scheduler.framework.singleton import Singleton
 
 default_config_location = './conf/kafka.yaml'
+logger = logging.getLogger(__name__)
 
 
 class Producer(object):
@@ -21,7 +22,7 @@ class Producer(object):
 
     def publish(self, topic, obj, serializing_func, key=None, partition=None):
         self.producer.send(topic, str(serializing_func(obj)), key, partition)
-        logging.getLogger().info('Message published to: %s, Payload: %s' % (topic, str(serializing_func(obj))))
+        logger.info('Message published to: %s, Payload: %s' % (topic, str(serializing_func(obj))))
 
 
 class Consumer(object):
@@ -56,7 +57,7 @@ class Consumer(object):
         try:
             return ast.literal_eval(message)
         except Exception as e:
-            logging.getLogger().error('Error While Serializing Message (%s). Reason : %s' % (message, e.message))
+            logger.error('Error While Serializing Message (%s). Reason : %s' % (message, e.message))
 
     def consume_async(self):
         for message in self.consumer:
@@ -70,7 +71,7 @@ class Consumer(object):
             if message.value is not None:
                 _.handle_function(_.serializing_function(message.value))
         except Exception as e:
-            logging.getLogger().error('Error While Executing consumer function with Message (%s). Reason : %s' %
+            logger.error('Error While Executing consumer function with Message (%s). Reason : %s' %
                                       (message, e.message))
 
 
@@ -90,8 +91,8 @@ def subscribe(topic, serializing_function, config_location=None):
                 c = Consumer()
             c.add_subscription(TopicSubscribe(topic, f, serializing_function))
 
-            logging.getLogger().info('Consumer Subscribed to: %s' % topic)
+            logger.info('Consumer Subscribed to: %s' % topic)
 
         except ConnectionError as e:
-            logging.getLogger().error('Kafka Connection Error: %s' % e.message)
+            logger.error('Kafka Connection Error: %s' % e.message)
     return decorated
