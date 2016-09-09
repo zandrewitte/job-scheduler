@@ -1,0 +1,9 @@
+--index-url https://pypi.python.org/simple/
+
+# 2015-11-12 Version frozen for 3.0.0-rc2
+
+marshmallow
+kafka_python
+dotmap
+futures
+pyyaml

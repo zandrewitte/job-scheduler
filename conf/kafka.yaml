@@ -1,0 +1,17 @@
+# Config needs to be mapped with names described for:
+# Kafka grouping is used for all the generic properties
+# Kafka Consumer: Consumer specific properties as listed on http://kafka-python.readthedocs.io/en/master/apidoc/KafkaConsumer.html
+# Kafka Producer: Producer specific properties as listed on http://kafka-python.readthedocs.io/en/master/apidoc/KafkaProducer.html
+kafka:
+  bootstrap_servers:
+    - 'localhost:9090'
+    - 'localhost:9091'
+    - 'localhost:9092'
+
+kafka-consumer:
+  group_id: 'group-name'
+  client_id: 'flask-consumer'
+
+kafka-producer:
+  client_id: 'flask-producer'
+  compression_type: 'gzip'
