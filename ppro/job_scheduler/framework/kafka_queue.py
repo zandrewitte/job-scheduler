@@ -6,11 +6,9 @@ import threading
 from concurrent.futures import ThreadPoolExecutor
 from kafka import KafkaConsumer, KafkaProducer
 from kafka.errors import ConnectionError
-
 import ppro.job_scheduler.framework.yaml_reader
 from ppro.job_scheduler.framework.singleton import Singleton
 
-logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 default_config_location = './conf/kafka.yaml'
 
 
