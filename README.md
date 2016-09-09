@@ -19,6 +19,6 @@
     . bin/activate
     pip install -r requirements.txt
 
-### Run the api ###
+### Run the Job Scheduler ###
 
-    python run_api.py
+    python run_job_scheduler.py
