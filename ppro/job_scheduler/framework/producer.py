@@ -1,8 +1,9 @@
 import uuid
 
-from ppro.job_scheduler.event import Event
 from ppro.job_scheduler.framework.kafka_queue import Producer
-from ppro.job_scheduler.topics import Topics
+from ppro.job_scheduler.models.event import Event
+
+from ppro.job_scheduler.models.topics import Topics
 
 while True:
     for i in range(1):

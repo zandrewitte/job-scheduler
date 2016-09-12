@@ -1,22 +1,25 @@
 import ast
+import os
 import threading
 import time
+
 from concurrent.futures import ThreadPoolExecutor
 from kafka import KafkaConsumer, KafkaProducer
 from kafka.errors import NoBrokersAvailable
+
 import ppro.job_scheduler.framework.yaml_reader
-from ppro.job_scheduler.framework.singleton import Singleton
 from ppro.job_scheduler.framework.logger import Logger
+from ppro.job_scheduler.framework.singleton import Singleton
 
 logger = Logger.get_logger(__name__)
-default_config_location = './conf/kafka.yaml'
+default_config_location = '/etc/kafka.yaml'
 
 
 class Producer(object):
     __metaclass__ = Singleton
 
     def __init__(self, config_location=default_config_location):
-        read = ppro.job_scheduler.framework.yaml_reader.read_yaml(config_location)
+        read = ppro.job_scheduler.framework.yaml_reader.read_yaml(os.getcwd() + config_location)
         self.__connect__(read)
 
     def __connect__(self, read):
@@ -37,7 +40,7 @@ class Consumer(object):
     __metaclass__ = Singleton
 
     def __init__(self, config_location=default_config_location):
-        read = ppro.job_scheduler.framework.yaml_reader.read_yaml(config_location)
+        read = ppro.job_scheduler.framework.yaml_reader.read_yaml(os.getcwd() + config_location)
         self.__connect__(read)
         self.function_set = {}
         self.executor = ThreadPoolExecutor(max_workers=8)
