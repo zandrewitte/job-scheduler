@@ -8,6 +8,9 @@ logger = logging.getLogger(__name__)
 
 class JobConsumer(object):
 
+    def __init__(self):
+        pass
+
     @staticmethod
     @subscribe(Topics.PlayerPro.Incoming.Event, Event.deserialize)
     def consume_event(event):

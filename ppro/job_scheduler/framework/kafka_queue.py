@@ -1,16 +1,24 @@
 import ast
 import logging
-import sys
 import threading
-
+import time
 from concurrent.futures import ThreadPoolExecutor
 from kafka import KafkaConsumer, KafkaProducer
-from kafka.errors import ConnectionError
+from kafka.errors import NoBrokersAvailable
 import ppro.job_scheduler.framework.yaml_reader
 from ppro.job_scheduler.framework.singleton import Singleton
 
 default_config_location = './conf/kafka.yaml'
-logger = logging.getLogger(__name__)
+logger = logging.getLogger()
+logger.setLevel('INFO')
+formatter = logging.Formatter(
+    '%(asctime)s {} %(name)s in PLAYERPRO-JOB-SCHEDULER: %(levelname)s %(message)s, '
+    'line: %(lineno)d in %(funcName)s, %(filename)s Created: %(created)f'
+        .format('localhost'), datefmt='%b %d %H:%M:%S')
+
+console_handler = logging.StreamHandler()
+console_handler.setFormatter(formatter)
+logger.addHandler(console_handler)
 
 
 class Producer(object):
@@ -18,7 +26,16 @@ class Producer(object):
 
     def __init__(self, config_location=default_config_location):
         read = ppro.job_scheduler.framework.yaml_reader.read_yaml(config_location)
-        self.producer = KafkaProducer(**dict(read.get('kafka', {}).items() + read.get('kafka-producer', {}).items()))
+        self.__connect__(read)
+
+    def __connect__(self, read):
+        try:
+            logger.info('Connecting to Kafka Cluster')
+            self.producer = KafkaProducer(**dict(read.get('kafka', {}).items() + read.get('kafka-producer', {}).items()))
+        except NoBrokersAvailable as conn_err:
+            logger.info('No Brokers Available on Cluster, Retrying in 5 seconds')
+            time.sleep(5)
+            self.__connect__(read)
 
     def publish(self, topic, obj, serializing_func, key=None, partition=None):
         self.producer.send(topic, str(serializing_func(obj)), key, partition)
@@ -30,11 +47,20 @@ class Consumer(object):
 
     def __init__(self, config_location=default_config_location):
         read = ppro.job_scheduler.framework.yaml_reader.read_yaml(config_location)
-        self.consumer = KafkaConsumer(**dict(read.get('kafka', {}).items() + read.get('kafka-consumer', {}).items()
-                                             + [('value_deserializer', self.message_serializer)]))
+        self.__connect__(read)
         self.function_set = {}
         self.executor = ThreadPoolExecutor(max_workers=8)
         self.consumeThread = threading.Thread(target=self.consume_async)
+
+    def __connect__(self, read):
+        try:
+            logger.info('Connecting to Kafka Cluster')
+            self.consumer = KafkaConsumer(**dict(read.get('kafka', {}).items() + read.get('kafka-consumer', {}).items() +
+                                                 [('value_deserializer', self.message_serializer)]))
+        except NoBrokersAvailable as conn_err:
+            logger.info('No Brokers Available on Cluster, Retrying in 5 seconds')
+            time.sleep(5)
+            self.__connect__(read)
 
     def add_subscription(self, topic_subscribe):
         if self.consumer.subscription() is not None:
@@ -65,14 +91,14 @@ class Consumer(object):
 
     @staticmethod
     def handle_message(function_set, message):
-        # print 'Received Message on Topic: %s, Payload: %s' % (message.topic, message.value)
+        logger.debug('Received Message on Topic: %s, Payload: %s' % (message.topic, message.value))
         try:
             _ = function_set[message.topic]
             if message.value is not None:
                 _.handle_function(_.serializing_function(message.value))
         except Exception as e:
-            logger.error('Error While Executing consumer function with Message (%s). Reason : %s' %
-                                      (message, e.message))
+            logger.error('Error While Executing consumer function with Message (%s). Reason : %s'
+                         % (message, e.message))
 
 
 class TopicSubscribe(object):
@@ -84,15 +110,11 @@ class TopicSubscribe(object):
 
 def subscribe(topic, serializing_function, config_location=None):
     def decorated(f):
-        try:
-            if config_location is not None:
-                c = Consumer(config_location)
-            else:
-                c = Consumer()
-            c.add_subscription(TopicSubscribe(topic, f, serializing_function))
+        if config_location is not None:
+            c = Consumer(config_location)
+        else:
+            c = Consumer()
+        c.add_subscription(TopicSubscribe(topic, f, serializing_function))
 
-            logger.info('Consumer Subscribed to: %s' % topic)
-
-        except ConnectionError as e:
-            logger.error('Kafka Connection Error: %s' % e.message)
+        logger.info('Consumer Subscribed to: %s' % topic)
     return decorated
