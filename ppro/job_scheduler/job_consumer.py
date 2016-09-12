@@ -1,9 +1,9 @@
 from ppro.job_scheduler.event import Event
 from ppro.job_scheduler.framework.kafka_queue import subscribe
 from ppro.job_scheduler.topics import Topics
-import logging
+from ppro.job_scheduler.framework.logger import Logger
 
-logger = logging.getLogger(__name__)
+logger = Logger.get_logger(__name__)
 
 
 class JobConsumer(object):

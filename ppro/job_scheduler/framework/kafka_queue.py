@@ -1,5 +1,4 @@
 import ast
-import logging
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -7,18 +6,10 @@ from kafka import KafkaConsumer, KafkaProducer
 from kafka.errors import NoBrokersAvailable
 import ppro.job_scheduler.framework.yaml_reader
 from ppro.job_scheduler.framework.singleton import Singleton
+from ppro.job_scheduler.framework.logger import Logger
 
+logger = Logger.get_logger(__name__)
 default_config_location = './conf/kafka.yaml'
-logger = logging.getLogger()
-logger.setLevel('INFO')
-formatter = logging.Formatter(
-    '%(asctime)s {} %(name)s in PLAYERPRO-JOB-SCHEDULER: %(levelname)s %(message)s, '
-    'line: %(lineno)d in %(funcName)s, %(filename)s Created: %(created)f'
-        .format('localhost'), datefmt='%b %d %H:%M:%S')
-
-console_handler = logging.StreamHandler()
-console_handler.setFormatter(formatter)
-logger.addHandler(console_handler)
 
 
 class Producer(object):
