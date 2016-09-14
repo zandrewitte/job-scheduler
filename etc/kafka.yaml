@@ -14,4 +14,3 @@ kafka-consumer:
 
 kafka-producer:
   client_id: 'playerpro-job-producer'
-  compression_type: 'gzip'

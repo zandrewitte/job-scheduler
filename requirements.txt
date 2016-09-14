@@ -7,3 +7,4 @@ kafka_python
 dotmap
 futures
 pyyaml
+python-snappy

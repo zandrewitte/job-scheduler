@@ -4,7 +4,11 @@ Topics = DotMap({
     'PlayerPro': {
         'Incoming': {
             'Event': 'playerpro-incoming-event',
-            'Feed': 'playerpro-incoming-feed'
+        },
+        'Jobs': {
+            'Analytics': 'playerpro-jobs-analytics',
+            'Feeds': 'playerpro-jobs-feeds',
+            'Notification': 'playerpro-jobs-notification'
         }
     },
     'Topic': {

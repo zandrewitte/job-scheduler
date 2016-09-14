@@ -12,7 +12,4 @@ class JobConsumer(object):
     @staticmethod
     @subscribe(Topics.PlayerPro.Incoming.Event, Event.deserialize)
     def consume_event(event):
-        logger.info('requestUUID : %s \n' % event.header.get("requestUUID"))
-        logger.info('userUUID : %s \n' % event.meta.get("userUUID"))
-        for element in event.payload.get('body'):
-            logger.info(element.get('id'))
+        logger.info(event)

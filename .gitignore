@@ -1,12 +1,12 @@
 *.pyc
 .DS_Store
 .Python
-.idea
+.idea/
 .venv
-bin
+bin/
 dist
-include
-lib
+include/
+lib/
 pip-selfcheck.json
 playerpro-api-v2.iml
 etc/settings.cfg
