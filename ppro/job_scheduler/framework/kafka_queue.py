@@ -75,7 +75,7 @@ class Consumer(object):
         except NoBrokersAvailable:
             seconds = fib(self.fib_count)
             self.fib_count += 1
-            logger.info('No Brokers Available on Cluster, Retrying in %s seconds' % seconds)
+            logger.error('No Brokers Available on Cluster, Retrying in %s seconds' % seconds)
             time.sleep(seconds)
             self.__connect__(read)
 
