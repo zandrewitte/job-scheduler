@@ -2,11 +2,14 @@ from marshmallow import Schema, fields, post_load
 
 
 class Event(object):
-    def __init__(self, correlation_id, action, resource, timestamp, source, payloads, request=None):
-        self.correlation_id = correlation_id
-        self.action = action
-        self.resource = resource
+    def __init__(self, resource_type, action_type, resource_url, e_tag, timestamp, correlation_id, source, payloads,
+                 request=None):
+        self.resource_type = resource_type
+        self.action_type = action_type
+        self.resource_url = resource_url
+        self.e_tag = e_tag
         self.timestamp = timestamp
+        self.correlation_id = correlation_id
         self.source = source
         self.payloads = payloads
         self.request = request
@@ -56,16 +59,18 @@ class PayloadSchema(Schema):
 
 
 class EventSchema(Schema):
-    correlation_id = fields.Str()
-    action = fields.Str()
-    resource = fields.Str()
+    resource_type = fields.Str()
+    action_type = fields.Str()
+    resource_url = fields.Str()
+    e_tag = fields.Str()
     timestamp = fields.Str()
+    correlation_id = fields.Str()
     source = fields.Str()
     request = fields.Nested(RequestSchema, required=False, allow_none=True, default=None)
     payloads = fields.Nested(PayloadSchema)
 
     @post_load
     def make_event(self, data):
-        return Event(data["correlation_id"], data["action"], data["resource"], data["timestamp"], data["source"],
-                     data["payloads"], data["request"])
+        return Event(data["resource_type"], data["action_type"], data["resource_url"], data["e_tag"], data["timestamp"],
+                     data["correlation_id"], data["source"], data["payloads"], data["request"])
 
