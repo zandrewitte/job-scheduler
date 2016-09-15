@@ -62,7 +62,7 @@ class Consumer(object):
         self.__connect__(read)
         self.function_set = {}
         self.executor = ThreadPoolExecutor(max_workers=8)
-        self.consumeThread = threading.Thread(target=self.consume_async)
+        self.consume_thread = threading.Thread(target=self.consume_async)
 
     def __connect__(self, read):
         try:
@@ -88,8 +88,8 @@ class Consumer(object):
         for topic in topic_subscribe.topics:
             self.function_set.setdefault(topic, []).append(topic_subscribe)
 
-        if not self.consumeThread.isAlive():
-            self.consumeThread.start()
+        if not self.consume_thread.isAlive():
+            self.consume_thread.start()
 
     @staticmethod
     def message_serializer(message):

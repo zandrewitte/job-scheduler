@@ -15,10 +15,10 @@ class JobConsumer(object):
         logger.info(event.payloads)
         logger.info(event.request)
 
-    @staticmethod
-    @subscribe([Topics.PlayerPro.Incoming.Event, Topics.PlayerPro.Jobs.Analytics], Event.deserialize)
-    def consume_event1(event):
-        logger.info("1")
+    # @staticmethod
+    # @subscribe([Topics.PlayerPro.Incoming.Event, Topics.PlayerPro.Jobs.Analytics], Event.deserialize)
+    # def consume_event1(event):
+    #     logger.info("1")
 
     # @staticmethod
     # @wildcard_subscribe('playerpro-incoming-*', Event.deserialize)
