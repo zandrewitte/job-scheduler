@@ -15,20 +15,37 @@ logger = Logger.get_logger(__name__)
 default_config_location = '/etc/kafka.yaml'
 
 
+def fib(num):
+    def fib_rec(x, prev, nxt):
+        if x == 0:
+            return prev
+        elif x == 1:
+            return nxt
+        else:
+            return fib_rec(x-1, nxt, prev+nxt)
+
+    return float(fib_rec(num, 0, 1))
+
+
 class Producer(object):
     __metaclass__ = Singleton
 
     def __init__(self, config_location=default_config_location):
         read = ppro.job_scheduler.framework.yaml_reader.read_yaml(os.getcwd() + config_location)
+        self.fib_count = 1
         self.__connect__(read)
 
     def __connect__(self, read):
         try:
             logger.info('Connecting to Kafka Cluster')
-            self.producer = KafkaProducer(**dict(read.get('kafka', {}).items() + read.get('kafka-producer', {}).items()))
+            self.producer = KafkaProducer(**dict(read.get('kafka', {}).items() +
+                                                 read.get('kafka-producer', {}).items()))
+            logger.info('Successfully Connected to Kafka Cluster')
         except NoBrokersAvailable as conn_err:
-            logger.info('No Brokers Available on Cluster, Retrying in 5 seconds')
-            time.sleep(5)
+            seconds = fib(self.fib_count)
+            self.fib_count += 1
+            logger.info('No Brokers Available on Cluster, Retrying in %s seconds' % seconds)
+            time.sleep(seconds)
             self.__connect__(read)
 
     def publish(self, topic, obj, serializing_func, key=None, partition=None):
@@ -41,6 +58,7 @@ class Consumer(object):
 
     def __init__(self, config_location=default_config_location):
         read = ppro.job_scheduler.framework.yaml_reader.read_yaml(os.getcwd() + config_location)
+        self.fib_count = 1
         self.__connect__(read)
         self.function_set = {}
         self.executor = ThreadPoolExecutor(max_workers=8)
@@ -49,11 +67,16 @@ class Consumer(object):
     def __connect__(self, read):
         try:
             logger.info('Connecting to Kafka Cluster')
-            self.consumer = KafkaConsumer(**dict(read.get('kafka', {}).items() + read.get('kafka-consumer', {}).items() +
+            self.consumer = KafkaConsumer(**dict(read.get('kafka', {}).items() +
+                                                 read.get('kafka-consumer', {}).items() +
                                                  [('value_deserializer', self.message_serializer)]))
+
+            logger.info('Successfully Connected to Kafka Cluster')
         except NoBrokersAvailable as conn_err:
-            logger.info('No Brokers Available on Cluster, Retrying in 5 seconds')
-            time.sleep(5)
+            seconds = fib(self.fib_count)
+            self.fib_count += 1
+            logger.info('No Brokers Available on Cluster, Retrying in %s seconds' % seconds)
+            time.sleep(seconds)
             self.__connect__(read)
 
     def add_subscription(self, topic_subscribe):
@@ -115,26 +138,33 @@ class WildCardConsumer(object):
 
     def __init__(self, config_location=default_config_location):
         read = ppro.job_scheduler.framework.yaml_reader.read_yaml(os.getcwd() + config_location)
+        self.fib_count = 1
         self.__connect__(read)
         self.function_set = {}
         self.executor = ThreadPoolExecutor(max_workers=8)
-        self.consumeThread = threading.Thread(target=self.consume_async, name='consume_async_wildcard')
+        self.consumeThread = threading.Thread(target=self.consume_async)
+        self.topic_pattern = None
 
     def __connect__(self, read):
         try:
             logger.info('Connecting to Kafka Cluster')
-            self.consumer = KafkaConsumer(**dict(read.get('kafka', {}).items() + read.get('kafka-consumer', {}).items() +
-                                                 [('value_deserializer', self.message_serializer)]))
+            self.consumer = KafkaConsumer(**dict(read.get('kafka', {}).items() + read.get('kafka-consumer', {}).items()
+                                                 + [('value_deserializer', self.message_serializer)]))
+            logger.info('Successfully Connected to Kafka Cluster')
         except NoBrokersAvailable as conn_err:
-            logger.info('No Brokers Available on Cluster, Retrying in 5 seconds')
-            time.sleep(5)
+            seconds = fib(self.fib_count)
+            self.fib_count += 1
+            logger.info('No Brokers Available on Cluster, Retrying in %s seconds' % seconds)
+            time.sleep(seconds)
             self.__connect__(read)
 
     def add_subscription(self, topic_subscribe):
         if self.consumer.subscription() is not None:
-            self.consumer.subscribe(pattern=topic_subscribe.topics)
+            self.topic_pattern = '%s|%s' % (self.topic_pattern, topic_subscribe.topics)
+            self.consumer.subscribe(pattern=self.topic_pattern)
         else:
-            self.consumer.subscribe(pattern=topic_subscribe.topics)
+            self.topic_pattern = topic_subscribe.topics
+            self.consumer.subscribe(pattern=self.topic_pattern)
 
         self.function_set[topic_subscribe.topics] = topic_subscribe
 
@@ -154,16 +184,12 @@ class WildCardConsumer(object):
 
     @staticmethod
     def handle_message(function_set, message):
-        logger.info('Received Message on Topic: %s, Payload: %s' % (message.topic, message.value))
+        logger.debug('Received Message on Topic: %s, Payload: %s' % (message.topic, message.value))
         try:
-            logger.info(function_set[message.topic])
-            logger.info(function_set)
+            matches = {value for key, value in function_set.items() if re.search(key, message.topic) is not None}
 
-            matches = {key: value for key, value in function_set.items() if re.search(key, message.topic) is not None}
-
-            logger.info(matches)
-            # if message.value is not None:
-            #     map(lambda v: v.handle_function(v.serializing_function(message.value)), _)
+            if message.value is not None:
+                map(lambda v: v.handle_function(v.serializing_function(message.value)), list(matches))
         except Exception as e:
             logger.error('Error While Executing consumer function with Message (%s). Reason : %s'
                          % (message, e.message))
