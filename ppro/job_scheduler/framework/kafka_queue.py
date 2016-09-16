@@ -41,6 +41,7 @@ class Producer(object):
             self.producer = KafkaProducer(**dict(read.get('kafka', {}).items() +
                                                  read.get('kafka-producer', {}).items()))
             logger.info('Successfully Connected to Kafka Cluster')
+            self.fib_count = 1
         except NoBrokersAvailable:
             seconds = fib(self.fib_count)
             self.fib_count += 1
@@ -72,6 +73,7 @@ class Consumer(object):
                                                  [('value_deserializer', self.message_serializer)]))
 
             logger.info('Successfully Connected to Kafka Cluster')
+            self.fib_count = 1
         except NoBrokersAvailable:
             seconds = fib(self.fib_count)
             self.fib_count += 1
@@ -151,6 +153,7 @@ class WildCardConsumer(object):
             self.consumer = KafkaConsumer(**dict(read.get('kafka', {}).items() + read.get('kafka-consumer', {}).items()
                                                  + [('value_deserializer', self.message_serializer)]))
             logger.info('Successfully Connected to Kafka Cluster')
+            self.fib_count = 1
         except NoBrokersAvailable:
             seconds = fib(self.fib_count)
             self.fib_count += 1
